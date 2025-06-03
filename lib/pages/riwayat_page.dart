@@ -13,7 +13,7 @@ class RiwayatSewaPage extends StatefulWidget {
 class _RiwayatSewaPageState extends State<RiwayatSewaPage> {
   String selectedStatus = 'all';
   List rentals = [];
-  List<int> reviewedVehicleIds = [];
+  List<int> reviewedRentalIds = [];
   bool isLoading = true;
 
   @override
@@ -25,10 +25,10 @@ class _RiwayatSewaPageState extends State<RiwayatSewaPage> {
   Future<void> fetchAll() async {
     setState(() => isLoading = true);
     final prefs = await SharedPreferences.getInstance();
-    final reviewed = prefs.getStringList('reviewed_vehicle_ids') ?? [];
+    final reviewed = prefs.getStringList('reviewed_rental_ids') ?? [];
     final data = await RentalService.fetchRentalHistory();
     setState(() {
-      reviewedVehicleIds = reviewed.map(int.parse).toList();
+      reviewedRentalIds = reviewed.map(int.parse).toList();
       rentals = data;
       isLoading = false;
     });
@@ -51,7 +51,7 @@ class _RiwayatSewaPageState extends State<RiwayatSewaPage> {
     int pendingReviews = rentals
         .where((r) =>
             r['status'] == 'completed' &&
-            !reviewedVehicleIds.contains(r['vehicle']['id']))
+            !reviewedRentalIds.contains(r['id']))
         .length;
 
     return Scaffold(
@@ -132,8 +132,7 @@ class _RiwayatSewaPageState extends State<RiwayatSewaPage> {
                             itemCount: filteredRentals.length,
                             itemBuilder: (context, index) {
                               final rental = filteredRentals[index];
-                              final vehicleId = rental['vehicle']['id'];
-                              final hasReviewed = reviewedVehicleIds.contains(vehicleId);
+                              final hasReviewed = reviewedRentalIds.contains(rental['id']);
 
                               return Container(
                                 margin: const EdgeInsets.only(bottom: 16),

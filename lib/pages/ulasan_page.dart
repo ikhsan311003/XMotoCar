@@ -19,14 +19,15 @@ class _BerikanUlasanPageState extends State<BerikanUlasanPage> {
   String comment = '';
   bool isSubmitting = false;
 
-  Future<void> saveReviewedVehicle(int vehicleId) async {
+  Future<void> saveReviewedRental(int rentalId) async {
   final prefs = await SharedPreferences.getInstance();
-  final reviewed = prefs.getStringList('reviewed_vehicle_ids') ?? [];
-  if (!reviewed.contains(vehicleId.toString())) {
-    reviewed.add(vehicleId.toString());
-    await prefs.setStringList('reviewed_vehicle_ids', reviewed);
+  final reviewed = prefs.getStringList('reviewed_rental_ids') ?? [];
+  if (!reviewed.contains(rentalId.toString())) {
+    reviewed.add(rentalId.toString());
+    await prefs.setStringList('reviewed_rental_ids', reviewed);
   }
 }
+
 
 
   @override
@@ -106,7 +107,8 @@ class _BerikanUlasanPageState extends State<BerikanUlasanPage> {
               rating: rating,
               comment: comment,
             );
-            await saveReviewedVehicle(vehicleId);
+            await saveReviewedRental(rentalId);
+
 
             showDialog(
               context: context,

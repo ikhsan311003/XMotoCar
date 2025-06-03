@@ -10,12 +10,14 @@ class ReviewProvider with ChangeNotifier {
   Future<void> fetchPendingReviews() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final reviewedIds = prefs.getStringList('reviewed_vehicle_ids') ?? [];
+      final reviewedIds = prefs.getStringList('reviewed_rental_ids') ?? [];
 
       final rentals = await RentalService.fetchRentalHistory();
+      final reviewedRentalIds = reviewedIds.map(int.parse).toList();
+
       _pendingReviewCount = rentals.where((r) {
         return r['status'] == 'completed' &&
-            !reviewedIds.contains(r['vehicle']['id'].toString());
+            !reviewedRentalIds.contains(r['id']);
       }).length;
 
       notifyListeners();
