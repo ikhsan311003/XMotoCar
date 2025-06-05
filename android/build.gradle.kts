@@ -19,3 +19,9 @@ subprojects {
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
+
+configurations.all {
+    resolutionStrategy {
+        force("androidx.core:core:1.9.0")
+    }
+}

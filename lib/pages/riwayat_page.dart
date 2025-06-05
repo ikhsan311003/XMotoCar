@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/rental_service.dart';
+import 'dart:convert'; // untuk jsonEncode
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import '../main.dart'; // agar bisa akses flutterLocalNotificationsPlugin & navigatorKey
+
 
 class RiwayatSewaPage extends StatefulWidget {
   const RiwayatSewaPage({super.key});
@@ -23,16 +27,57 @@ class _RiwayatSewaPageState extends State<RiwayatSewaPage> {
   }
 
   Future<void> fetchAll() async {
-    setState(() => isLoading = true);
-    final prefs = await SharedPreferences.getInstance();
-    final reviewed = prefs.getStringList('reviewed_rental_ids') ?? [];
-    final data = await RentalService.fetchRentalHistory();
-    setState(() {
-      reviewedRentalIds = reviewed.map(int.parse).toList();
-      rentals = data;
-      isLoading = false;
+  setState(() => isLoading = true);
+
+  final prefs = await SharedPreferences.getInstance();
+  final reviewed = prefs.getStringList('reviewed_rental_ids') ?? [];
+  final notified = prefs.getStringList('notified_rental_ids') ?? [];
+
+  final newData = await RentalService.fetchRentalHistory();
+
+  setState(() {
+    reviewedRentalIds = reviewed.map(int.parse).toList();
+    rentals = newData;
+    isLoading = false;
+  });
+
+  // Cek rental yang status-nya completed, belum diulas, dan belum dikasih notifikasi
+  final newCompletedUnreviewed = newData.where((r) =>
+      r['status'] == 'completed' &&
+      !reviewed.contains(r['id'].toString()) &&
+      !notified.contains(r['id'].toString()));
+
+  if (newCompletedUnreviewed.isNotEmpty) {
+    final rental = newCompletedUnreviewed.first;
+    final payload = jsonEncode({
+      'rental_id': rental['id'],
+      'vehicle_id': rental['vehicle']['id'],
     });
+
+    await flutterLocalNotificationsPlugin.show(
+      0,
+      'Terima kasih telah merental kendaraan!',
+      'Jangan lupa untuk memberikan ulasan Anda di XMotoCar.',
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'rental_channel_id',
+          'Rental Channel',
+          channelDescription: 'Notifikasi status rental completed',
+          importance: Importance.max,
+          priority: Priority.high,
+        ),
+      ),
+      payload: payload,
+    );
+
+    // Tambahkan ke daftar yang sudah dikasih notifikasi
+    notified.add(rental['id'].toString());
+    await prefs.setStringList('notified_rental_ids', notified);
   }
+}
+
+
+
 
   String formatRupiah(dynamic value) {
     final number = num.tryParse(value.toString()) ?? 0;

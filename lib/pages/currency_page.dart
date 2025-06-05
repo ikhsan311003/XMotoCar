@@ -125,7 +125,10 @@ class _CurrencyPageState extends State<CurrencyPage> {
                     ElevatedButton.icon(
                       onPressed: _isLoading ? null : convertCurrency,
                       icon: const Icon(Icons.currency_exchange),
-                      label: const Text('Konversi'),
+                      label: const Text(
+    'Konversi',
+    style: TextStyle(color: Colors.white), // Ubah warna teks di sini
+  ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.deepPurple,
                         padding: const EdgeInsets.symmetric(vertical: 14),

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:convert';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // Pages
 import 'pages/login_page.dart';
@@ -33,11 +36,51 @@ import 'pages/manage_pembayaran_page.dart';
 // Providers
 import 'providers/review_provider.dart';
 
-void main() {
+// Services
+import 'services/notification_service.dart';
+
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
+Future<void> resetReviewedRentalCache() async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.remove('reviewed_rental_ids');
+  print('🧹 reviewed_rental_ids berhasil dihapus dari SharedPreferences');
+}
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Inisialisasi notifikasi
+  const AndroidInitializationSettings initializationSettingsAndroid =
+      AndroidInitializationSettings('@mipmap/ic_launcher');
+
+  const InitializationSettings initializationSettings =
+      InitializationSettings(android: initializationSettingsAndroid);
+
+  await flutterLocalNotificationsPlugin.initialize(
+    initializationSettings,
+    onDidReceiveNotificationResponse: (NotificationResponse response) async {
+      final payload = response.payload;
+      if (payload != null) {
+        final data = jsonDecode(payload);
+        navigatorKey.currentState?.pushNamed('/riwayat', arguments: data);
+      }
+    },
+  );
+
+  await NotificationService.initialize(); // WAJIB
+  resetReviewedRentalCache(); // 🔥 tambahkan sementara untuk reset data lokal
+
+  final reviewProvider = ReviewProvider();
+  await reviewProvider.fetchPendingReviews();
+
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => ReviewProvider()..fetchPendingReviews()),
+        ChangeNotifierProvider(create: (_) => reviewProvider),
       ],
       child: const XMotoApp(),
     ),
@@ -50,6 +93,7 @@ class XMotoApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'XMotoCar',
       theme: ThemeData.dark(),
       debugShowCheckedModeBanner: false,

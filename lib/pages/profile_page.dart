@@ -81,17 +81,54 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+  final picker = ImagePicker();
 
-    if (pickedFile != null && userId != null) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('profile_image_path_$userId', pickedFile.path);
-      setState(() {
-        _profileImage = File(pickedFile.path);
-      });
-    }
-  }
+  showModalBottomSheet(
+    context: context,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+    ),
+    builder: (context) {
+      return SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Ambil dari Kamera'),
+              onTap: () async {
+                Navigator.pop(context); // Tutup dialog
+                final pickedFile = await picker.pickImage(source: ImageSource.camera);
+                if (pickedFile != null && userId != null) {
+                  final prefs = await SharedPreferences.getInstance();
+                  await prefs.setString('profile_image_path_$userId', pickedFile.path);
+                  setState(() {
+                    _profileImage = File(pickedFile.path);
+                  });
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Pilih dari Galeri'),
+              onTap: () async {
+                Navigator.pop(context); // Tutup dialog
+                final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+                if (pickedFile != null && userId != null) {
+                  final prefs = await SharedPreferences.getInstance();
+                  await prefs.setString('profile_image_path_$userId', pickedFile.path);
+                  setState(() {
+                    _profileImage = File(pickedFile.path);
+                  });
+                }
+              },
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
+
 
   Future<void> _loadProfileImage() async {
     if (userId == null) return;

@@ -15,11 +15,19 @@ class ReviewProvider with ChangeNotifier {
       final rentals = await RentalService.fetchRentalHistory();
       final reviewedRentalIds = reviewedIds.map(int.parse).toList();
 
-      _pendingReviewCount = rentals.where((r) {
-        return r['status'] == 'completed' &&
-            !reviewedRentalIds.contains(r['id']);
-      }).length;
+      int count = 0;
 
+      for (var r in rentals) {
+        final rentalId = r['id'];
+        final isCompleted = r['status'] == 'completed';
+        final isAlreadyReviewed = reviewedRentalIds.contains(rentalId);
+
+        if (isCompleted && !isAlreadyReviewed) {
+          count++;
+        }
+      }
+
+      _pendingReviewCount = count;
       notifyListeners();
     } catch (e) {
       _pendingReviewCount = 0;

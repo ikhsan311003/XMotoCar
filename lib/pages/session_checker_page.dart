@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+import '../services/notification_service.dart';
 
 class SessionCheckerPage extends StatefulWidget {
   const SessionCheckerPage({super.key});
@@ -16,20 +17,23 @@ class _SessionCheckerPageState extends State<SessionCheckerPage> {
   }
 
   Future<void> _checkSession() async {
-    final isLoggedIn = await AuthService.isLoggedIn();
+  final isLoggedIn = await AuthService.isLoggedIn();
 
-    if (isLoggedIn) {
-      final role = await AuthService.getRole();
+  if (isLoggedIn) {
+    final role = await AuthService.getRole();
 
-      if (role == 'admin') {
-        Navigator.pushReplacementNamed(context, '/admin-dashboard');
-      } else {
-        Navigator.pushReplacementNamed(context, '/home');
-      }
+    if (role == 'admin') {
+      Navigator.pushReplacementNamed(context, '/admin-dashboard');
     } else {
-      Navigator.pushReplacementNamed(context, '/login');
+      // Start notifikasi jika user (bukan admin)
+      NotificationService.startPeriodicCheck(); // 🔔 Mulai cek rental completed tiap 30 detik
+      Navigator.pushReplacementNamed(context, '/home');
     }
+  } else {
+    Navigator.pushReplacementNamed(context, '/login');
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
